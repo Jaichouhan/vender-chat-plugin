@@ -1,19 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "react-responsive-modal/styles.css";
 import { Modal } from "react-responsive-modal";
 import { ref, push, set, onChildAdded } from "firebase/database";
+import { getAuth } from "firebase/auth";
+import Messagechat from "./Messagechat";
+import { uid } from "uid";
 
 const ClickModel = ({ db }) => {
+  const customRef = useRef();
   const [open, setOpen] = useState(false);
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const [name, setName] = useState("");
+  const [current, setCurrent] = useState(name);
+  const auth = getAuth();
 
-  const chatMessage = ref(db, "message");
+  // const postId = () => {};
+  const chatNode = "20-100";
+
+  const chatMessage = ref(db, "message/" + chatNode);
 
   useEffect(() => {
+    setChat([]);
     onChildAdded(chatMessage, (data) => {
       setChat((chat) => [...chat, data.val()]);
     });
@@ -31,20 +41,22 @@ const ClickModel = ({ db }) => {
   let m = addZero(d.getMinutes());
   let s = addZero(d.getSeconds());
   let time = h + ":" + m + ":" + s;
+  const uuid = uid();
 
   const typeMessage = (e) => {
     e.preventDefault();
+    // const userId = auth.currentUser.uid;
     const msg = push(chatMessage);
     set(msg, {
-      receiverId: 1,
-      receiverName: "Jai",
-      senderId: 2,
-      senderName: "Dheeraj",
       message: message,
       status: time,
       name: name,
+      uuid,
+      // userId: userId,
+      // createdAt: db.firestore.FieldValue.serverTimestamp(),
     });
     setMessage("");
+    customRef.current.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -75,36 +87,13 @@ const ClickModel = ({ db }) => {
             <img src="./images/1647068598.png" alt="img" />
             <div className="chat-model-size-status">
               <p>{name}</p>
-              <span>1 min</span>
+              <span>{time}s</span>
             </div>
           </div>
           <div className="chat-model-size-height">
-            {chat &&
-              chat.map((data, i) => (
-                <div
-                  className={`${
-                    data.name === name
-                      ? "chat-model-size-client"
-                      : "chat-model-size-help"
-                  }`}
-                  key={i}
-                  style={{ position: "relative" }}
-                >
-                  <p>{data.message}</p>
-                  <p
-                    style={{
-                      position: "absolute",
-                      top: "-20px",
-                      marginBottom: "10px",
-                      display: "none",
-                    }}
-                  >
-                    {data.name}
-                  </p>
-                  <span>{data.status}s</span>
-                </div>
-              ))}
+            <Messagechat name={name} chat={chat} />
           </div>
+          <span ref={customRef}></span>
 
           <div className="chat-model-size-position">
             <form onSubmit={typeMessage}>
@@ -126,7 +115,9 @@ const ClickModel = ({ db }) => {
 </label>*/}
                 </div>
                 <div className="">
-                  <button type="submit">Send</button>
+                  <button type="submit" disabled={!message}>
+                    Send
+                  </button>
                 </div>
               </div>
             </form>

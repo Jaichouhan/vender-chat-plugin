@@ -1,4 +1,3 @@
-import React from "react";
 import "./App.css";
 import ChatPage from "./Components/ChatPage";
 import ClickModel from "./Components/ClickModel";
